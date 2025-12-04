@@ -1,49 +1,151 @@
-import { useContext } from "react";
-import { Link } from "react-router-dom";
+import { useContext, useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import Input from "../components/common/Input";
 import Button from "../components/common/Button";
 import useForm from "../hooks/useForm";
-import { ThemeContext } from "../App";
+import { ThemeContext, AuthContext } from "../App";
 
 const Login = () => {
   const { form, handleChange } = useForm({ username: "", password: "" });
+  const { login } = useContext(AuthContext);
   const { theme } = useContext(ThemeContext);
-  const dark = theme === 'dark';
-  const bg = dark ? '#0f1720' : '#f8fafc';
-  const text = dark ? '#e6eef8' : '#0b1220';
-  const cardBg = dark ? '#13202a' : '#ffffff';
-  const mutedText = dark ? '#97a6b2' : '#6b7280';
+  const navigate = useNavigate();
+
+  const [error, setError] = useState(null);
+
+  const dark = theme === "dark";
+  const bg = dark ? "#0f1720" : "#f8fafc";
+  const text = dark ? "#e6eef8" : "#0b1220";
+  const cardBg = dark ? "#13202a" : "#ffffff";
+  const mutedText = dark ? "#97a6b2" : "#6b7280";
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError(null);
+
+    try {
+      // LOGIN OFICIAL JWT
+      const response = await fetch("http://127.0.0.1:8000/api/token/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: form.username,
+          password: form.password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError("Credenciales incorrectas");
+        return;
+      }
+
+      // Guardar token
+      localStorage.setItem("ev3pi-token", data.access);
+
+      // Obtener perfil
+      const perfilResp = await fetch("http://127.0.0.1:8000/api/perfil/", {
+        headers: {
+          Authorization: `Bearer ${data.access}`,
+        },
+      });
+
+      const perfil = await perfilResp.json();
+      login(data.access, perfil); // Guardar en contexto
+
+      // Redirección por rol
+      switch (perfil.rol) {
+        case "TI":
+          navigate("/system-settings");
+          break;
+        case "AUDITOR":
+          navigate("/audit-panel");
+          break;
+        case "ANALISTA":
+          navigate("/tax-management");
+          break;
+        case "CORREDOR":
+          navigate("/registros");
+          break;
+        default:
+          navigate("/");
+      }
+    } catch (error) {
+      setError("Error de conexión con el servidor");
+    }
+  };
 
   return (
-    <div style={{ background: bg, color: text, minHeight: 'calc(100vh - 56px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-      <div style={{ maxWidth: "400px", width: '100%', background: cardBg, padding: '30px', borderRadius: '8px', boxShadow: dark ? 'none' : '0 6px 18px rgba(15,23,42,0.06)' }}>
-        <h2 style={{ marginTop: 0, textAlign: 'center' }}>Iniciar sesión</h2>
+    <div
+      style={{
+        background: bg,
+        color: text,
+        minHeight: "calc(100vh - 56px)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "20px",
+      }}
+    >
+      <form
+        onSubmit={handleSubmit}
+        style={{
+          maxWidth: "400px",
+          width: "100%",
+          background: cardBg,
+          padding: "30px",
+          borderRadius: "8px",
+          boxShadow: dark ? "none" : "0 6px 18px rgba(15,23,42,0.06)",
+        }}
+      >
+        <h2 style={{ marginTop: 0, textAlign: "center" }}>Iniciar sesión</h2>
 
-        <Input 
-          label="Usuario" 
+        {error && (
+          <div
+            style={{
+              background: "#ffdddd",
+              padding: "10px",
+              borderRadius: "6px",
+              marginBottom: "12px",
+              color: "#a00",
+              fontSize: "14px",
+              textAlign: "center",
+            }}
+          >
+            {error}
+          </div>
+        )}
+
+        <Input
+          label="Usuario"
           name="username"
           value={form.username}
           onChange={handleChange}
         />
 
-        <Input 
-          label="Contraseña" 
+        <Input
+          label="Contraseña"
           name="password"
           type="password"
           value={form.password}
           onChange={handleChange}
         />
 
-        <Button label="Ingresar" style={{ width: '100%', marginTop: '16px' }} />
+        <Button
+          label="Ingresar"
+          style={{ width: "100%", marginTop: "16px" }}
+          type="submit"
+        />
 
-        <div style={{ marginTop: '16px', textAlign: 'center' }}>
-          <Link to="/" style={{ color: mutedText, textDecoration: 'none', fontSize: '14px' }}>
+        <div style={{ marginTop: "16px", textAlign: "center" }}>
+          <Link to="/" style={{ color: mutedText, textDecoration: "none" }}>
             Volver al inicio
           </Link>
         </div>
-      </div>
+      </form>
     </div>
   );
-}
+};
 
-export default Login
+export default Login;

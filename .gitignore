@@ -1,4 +1,8 @@
-# --- Logs ---
+# ==============================
+#   GLOBAL IGNORE (Frontend + Backend)
+# ==============================
+
+# --- Logs generales ---
 logs
 *.log
 npm-debug.log*
@@ -7,47 +11,97 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-# Diagnostic reports
-report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+# --- OS / Editor / IDE ---
+.DS_Store
+Thumbs.db
+ehthumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
 
-# Runtime data
-pids
-*.pid
-*.seed
-*.pid.lock
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
 
-# Instrumented libs
-lib-cov
+# ==============================
+#           FRONTEND
+# ==============================
 
-# Coverage
-coverage
-*.lcov
-.nyc_output
-
-# Build tools
-.grunt
-bower_components
-.lock-wscript
-build/Release
-
-# Dependencies
+# Dependencias
 node_modules/
+
+# Builds
+dist/
+dist-ssr/
+out/
+build/
+
+# Cachés
+.cache/
+.parcel-cache/
+.vite/
+.next/
+.nuxt/
+.svelte-kit/
+
+# Config temporal Vite
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
+
+# Env del frontend
+.env
+.env.*
+!.env.example
+
+
+# ==============================
+#           BACKEND (DJANGO)
+# ==============================
+
+__pycache__/
+*.py[cod]
+*.pyc
+*.pyo
+
+# Entornos virtuales
+venv/
+env/
+*.pyvenv
+
+# Base de datos SQLite
+*.sqlite3
+
+# Archivos de medios
+media/
+staticfiles/
+
+# Django static collect
+static/
+
+# Secretos
+*.env
+*.key
+*.pem
+
+# Reportes
+*.coverage
+coverage/
+htmlcov/
+
+# ==============================
+#       OTRAS CONFIGURACIONES
+# ==============================
+
+# Caches de frameworks
+*.tsbuildinfo
+.nyc_output
+bower_components/
 jspm_packages/
 web_modules/
 
-# TypeScript
-*.tsbuildinfo
-
-# Caches
-.npm
-.eslintcache
-.stylelintcache
-.node_repl_history
-.cache
-.parcel-cache
-.temp
-
-# Yarn v3
+# Yarn
 .pnp.*
 .yarn/*
 !.yarn/patches
@@ -55,55 +109,3 @@ web_modules/
 !.yarn/releases
 !.yarn/sdks
 !.yarn/versions
-
-# Env files
-.env
-.env.*
-!.env.example
-
-# Framework outputs
-.next
-out
-.nuxt
-dist
-.vuepress/dist
-.svelte-kit/
-**/.vitepress/dist
-**/.vitepress/cache
-.docusaurus
-.serverless/
-.fusebox/
-.dynamodb/
-.firebase/
-.tern-port
-.vscode-test
-
-# Vite logs
-vite.config.js.timestamp-*
-vite.config.ts.timestamp-*
-
-# General build outputs
-dist-ssr
-*.local
-
-# Editors
-.vscode/*
-!.vscode/extensions.json
-.idea
-.DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
-
-# --- Django ---
-__pycache__/
-*.pyc
-env/
-venv/
-*.sqlite3
-media/
-staticfiles/
-*.env
-*.pyvenv
