@@ -31,10 +31,13 @@ export default function Navbar({ onToggleSidebar }) {
         </button>
       )}
 
-      <div style={{ display: 'flex', gap: 20 }}>
+      <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
         <Link to="/" style={{ color: navColor, textDecoration: 'none' }}>Home</Link>
         <Link to="/login" style={{ color: navColor, textDecoration: 'none' }}>Login</Link>
-        <Link to="/dashboard" style={{ color: navColor, textDecoration: 'none' }}>Dashboard</Link>
+        <Link to="/certificates-upload" style={{ color: navColor, textDecoration: 'none' }}>Certificados</Link>
+        <Link to="/tax-management" style={{ color: navColor, textDecoration: 'none' }}>Gestión tributaria</Link>
+        <Link to="/audit-panel" style={{ color: navColor, textDecoration: 'none' }}>Auditoría</Link>
+        <Link to="/system-settings" style={{ color: navColor, textDecoration: 'none' }}>Ajustes</Link>
       </div>
     </nav>
   );
