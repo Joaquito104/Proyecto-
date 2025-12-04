@@ -1,6 +1,6 @@
 # EV3-Pi FrontEnd — Resumen de Desarrollo
 
-> Documentación actualizada con todas las páginas y funcionalidades desarrolladas hasta la fecha.
+> Documentación con todas las páginas y funcionalidades dentro de front-end
 
 ## Resumen General
 
@@ -65,7 +65,7 @@ Todas las páginas se encuentran en `src/pages/` y están integradas en el route
 ### 7. **SystemSettings** (`/system-settings`)
 - Página de configuración del sistema.
 - Inputs para nombre del sitio y toggle de modo mantenimiento.
-- Botón guardar con feedback (simulado).
+- Botón guardar con feedback (simulado y desarrollar en un futuro).
 - Tema claro/oscuro integrado. 
 
 ## Componentes Base
@@ -148,42 +148,9 @@ npm run lint         # Ejecutar ESLint
 
 4. **TaxManagement** — Estructura para mostrar datos tributarios desde backend.
 
-## Estructura de Carpetas
-
-```
-FrontEnd/
-├── src/
-│   ├── pages/
-│   │   ├── Home.jsx
-│   │   ├── Login.jsx
-│   │   ├── Dashboard.jsx
-│   │   ├── AuditPanel.jsx
-│   │   ├── CertificatesUpload.jsx
-│   │   ├── TaxManagement.jsx
-│   │   └── SystemSettings.jsx
-│   ├── components/
-│   │   ├── layout/
-│   │   │   ├── Navbar.jsx
-│   │   │   └── Sidebar.jsx
-│   │   └── common/
-│   │       ├── ThemeToggle.jsx
-│   │       ├── Input.jsx
-│   │       └── Button.jsx
-│   ├── hooks/
-│   │   └── useForm.js
-│   ├── App.jsx
-│   ├── router.jsx
-│   ├── main.jsx
-│   └── index.css
-├── package.json
-├── vite.config.js
-└── README.md
-```
-
 ## Notas Importantes
 
 - **Desarrollo en `FrontEnd/src/pages/`**: Todas las páginas se encuentran en esta carpeta (regla establecida).
-- **Carpeta `Prototipes/`**: Eliminada del proyecto (ya está en `.gitignore`).
 - **Home.jsx**: Maneja su propio layout (no usa LayoutWrapper). Incluye Navbar, ThemeToggle y Footer internamente.
 - **AuditPanel**:
   - Tabla de eventos inicia vacía — se pobla desde API.
@@ -194,5 +161,5 @@ FrontEnd/
   - Preferencia guardada en `localStorage` bajo clave `ev3pi-theme`.
   - Todas las páginas y componentes responden automáticamente.
 - **3 cajas en Home**: Estructura lista para agregar iconos/imágenes/contenido futuro.
-- **Branding**: Proyecto renombrado a "Nuam" en Home.jsx (título y secciones).
+
 

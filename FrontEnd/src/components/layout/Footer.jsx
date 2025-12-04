@@ -26,7 +26,7 @@ export default function Footer() {
         <div>
           <h4 style={{ margin: '0 0 12px 0', fontWeight: '600', color: text }}>Atención al Cliente</h4>
           <ul style={{ margin: 0, padding: 0, listStyle: 'none', fontSize: 13 }}>
-            <li style={{ marginBottom: 8 }}><a href="mailto:support@ev3pi.com" style={{ color: accent, textDecoration: 'none' }}>📧 Correo:(Proximante)</a></li>
+            <li style={{ marginBottom: 8 }}><span style={{ color: accent, textDecoration: 'none' }}>Correo: (Próximamente)</span></li>
 
           </ul>
         </div>
