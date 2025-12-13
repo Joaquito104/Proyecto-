@@ -25,10 +25,9 @@ export default function Navbar({ onToggleSidebar }) {
     borderRadius: 6,
     background: isActive(path) ? activeBg : "transparent",
     fontWeight: isActive(path) ? 700 : 500,
-    transition: "all 200ms ease-in-out",
   });
 
-  // ✅ Mostrar links SOLO si el rol tiene permiso (para que “se note” el RBAC)
+  // RBAC visual
   const canSee = (allowedRoles = []) => {
     if (!user) return false;
     if (user.is_superuser) return true;
@@ -58,8 +57,6 @@ export default function Navbar({ onToggleSidebar }) {
       {onToggleSidebar && (
         <button
           onClick={onToggleSidebar}
-          aria-label="Toggle sidebar"
-          title="Toggle sidebar"
           style={{
             width: 40,
             height: 40,
@@ -75,7 +72,7 @@ export default function Navbar({ onToggleSidebar }) {
         </button>
       )}
 
-      <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", flex: 1 }}>
+      <div style={{ display: "flex", gap: 10, flexWrap: "wrap", flex: 1 }}>
         <Link to="/" style={linkStyle("/")}>Home</Link>
 
         {canSee(["CORREDOR", "TI"]) && (
@@ -90,6 +87,14 @@ export default function Navbar({ onToggleSidebar }) {
           </Link>
         )}
 
+        {/* ✅ VALIDACIÓN — SOLO AUDITOR / TI */}
+        {canSee(["AUDITOR", "TI"]) && (
+          <Link to="/validacion" style={linkStyle("/validacion")}>
+            Validación
+          </Link>
+        )}
+
+        {/* ✅ AUDITORÍA */}
         {canSee(["AUDITOR", "TI"]) && (
           <Link to="/audit-panel" style={linkStyle("/audit-panel")}>
             Auditoría
@@ -113,15 +118,12 @@ export default function Navbar({ onToggleSidebar }) {
         <ThemeToggle variant="inline" />
 
         {!user ? (
-          <Link
-            to="/iniciar-sesion"
-            style={{ color: navColor, textDecoration: "none", fontWeight: 700 }}
-          >
+          <Link to="/iniciar-sesion" style={{ color: navColor }}>
             Iniciar sesión
           </Link>
         ) : (
           <>
-            <span style={{ fontSize: 13, opacity: 0.9 }}>
+            <span style={{ fontSize: 13 }}>
               {user.username} — <b>{user.is_superuser ? "SUPER" : user.rol}</b>
             </span>
 
@@ -136,7 +138,6 @@ export default function Navbar({ onToggleSidebar }) {
                 cursor: "pointer",
                 fontWeight: 700,
               }}
-              title="Cerrar sesión"
             >
               Cerrar sesión
             </button>

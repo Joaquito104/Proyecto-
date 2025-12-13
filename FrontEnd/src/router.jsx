@@ -1,5 +1,4 @@
 import { Routes, Route } from "react-router-dom";
-import { useContext } from "react";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import CertificatesUpload from "./pages/CertificatesUpload";
@@ -7,13 +6,12 @@ import TaxManagement from "./pages/TaxManagement";
 import AuditPanel from "./pages/AuditPanel";
 import AdministracionNuam from "./pages/AdministracionNuam";
 import Registros from "./pages/Registros";
+import BandejaValidacion from "./pages/BandejaValidacion";
 import NoAutorizado from "./pages/NoAutorizado";
 
 import Navbar from "./components/layout/Navbar";
 import Footer from "./components/layout/Footer";
-
 import ProtectedRoute from "./auth/ProtectedRoute";
-import { AuthContext } from "./App";
 
 const LayoutWrapper = ({ children }) => (
   <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
@@ -24,8 +22,6 @@ const LayoutWrapper = ({ children }) => (
 );
 
 export default function Router() {
-  const { user } = useContext(AuthContext);
-
   return (
     <Routes>
       {/* LOGIN */}
@@ -34,8 +30,7 @@ export default function Router() {
       {/* PÚBLICA */}
       <Route path="/" element={<Home />} />
 
-      {/* PRIVADAS (todas requieren login) */}
-
+      {/* REGISTROS */}
       <Route
         path="/registros"
         element={
@@ -47,6 +42,7 @@ export default function Router() {
         }
       />
 
+      {/* CERTIFICADOS */}
       <Route
         path="/certificates-upload"
         element={
@@ -58,6 +54,7 @@ export default function Router() {
         }
       />
 
+      {/* GESTIÓN TRIBUTARIA */}
       <Route
         path="/tax-management"
         element={
@@ -69,6 +66,19 @@ export default function Router() {
         }
       />
 
+      {/* ✅ VALIDACIÓN — SOLO AUDITOR / TI */}
+      <Route
+        path="/validacion"
+        element={
+          <ProtectedRoute roles={["AUDITOR", "TI"]}>
+            <LayoutWrapper>
+              <BandejaValidacion />
+            </LayoutWrapper>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* AUDITORÍA */}
       <Route
         path="/audit-panel"
         element={
@@ -80,12 +90,13 @@ export default function Router() {
         }
       />
 
+      {/* ADMIN TI */}
       <Route
         path="/system-settings"
         element={
           <ProtectedRoute roles={["TI"]}>
             <LayoutWrapper>
-                <AdministracionNuam />
+              <AdministracionNuam />
             </LayoutWrapper>
           </ProtectedRoute>
         }

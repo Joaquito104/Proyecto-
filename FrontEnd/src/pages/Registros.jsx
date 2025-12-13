@@ -1,104 +1,156 @@
-import { useState, useEffect, useContext } from "react";
-import { ThemeContext } from "../App";
+import { useEffect, useState, useContext } from "react";
+import { AuthContext } from "../App";
+import {
+  obtenerRegistros,
+  eliminarRegistro,
+  editarRegistro,
+} from "../services/registrosService";
+import {
+  crearCalificacion,
+  enviarValidacion,
+} from "../services/calificacionesService";
 
 export default function Registros() {
-  const { theme } = useContext(ThemeContext);
-  const dark = theme === "dark";
-  const bg = dark ? "#0f1720" : "#f8fafc";
-  const text = dark ? "#e6eef8" : "#0b1220";
-  const card = dark ? "#13202a" : "#ffffff";
-  const border = dark ? "#374151" : "#d1d5db";
-  const muted = dark ? "#97a6b2" : "#6b7280";
-  const inputBg = dark ? "#1f2937" : "#fff";
-
+  const { user } = useContext(AuthContext);
   const [registros, setRegistros] = useState([]);
-  const [busqueda, setBusqueda] = useState("");
-  const [tipoFiltro, setTipoFiltro] = useState("titulo");
-  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const token = localStorage.getItem("ev3pi-token");
+  const cargarRegistros = async () => {
+    try {
+      const data = await obtenerRegistros();
+      setRegistros(Array.isArray(data) ? data : []);
+    } catch (e) {
+      console.error(e);
+      setError("Error cargando registros");
+      setRegistros([]);
+    }
+  };
 
   useEffect(() => {
     cargarRegistros();
   }, []);
 
-  function cargarRegistros() {
-    setLoading(true);
+  const ultimaCalificacion = (r) =>
+    r.calificaciones && r.calificaciones.length > 0
+      ? r.calificaciones[r.calificaciones.length - 1]
+      : null;
 
-    fetch("http://127.0.0.1:8000/api/registros/", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
-      .then((res) => res.json())
-      .then((data) => setRegistros(data))
-      .finally(() => setLoading(false));
-  }
+  const handleCrearCalificacion = async (registroId) => {
+    try {
+      await crearCalificacion(registroId);
+      alert("Calificación creada (BORRADOR)");
+      cargarRegistros();
+    } catch {
+      alert("Error creando calificación");
+    }
+  };
 
-  // Filtrar registros según búsqueda
-  const registrosFiltrados = registros.filter((r) => {
-    const valor = busqueda.toLowerCase();
-    if (tipoFiltro === "titulo") return r.titulo.toLowerCase().includes(valor);
-    if (tipoFiltro === "descripcion") return r.descripcion.toLowerCase().includes(valor);
-    if (tipoFiltro === "todos") 
-      return r.titulo.toLowerCase().includes(valor) || r.descripcion.toLowerCase().includes(valor);
-    return true;
-  });
+  const handleEnviarValidacion = async (calificacionId) => {
+    try {
+      await enviarValidacion(calificacionId);
+      alert("Enviado a validación");
+      cargarRegistros();
+    } catch {
+      alert("Error enviando a validación");
+    }
+  };
+
+  const handleEliminar = async (id) => {
+    if (!window.confirm("¿Eliminar este registro?")) return;
+    await eliminarRegistro(id);
+    cargarRegistros();
+  };
+
+  const handleEditar = async (r) => {
+    const titulo = prompt("Nuevo título", r.titulo);
+    if (!titulo) return;
+
+    await editarRegistro(r.id, { titulo });
+    cargarRegistros();
+  };
 
   return (
-    <div style={{ padding: 24, background: bg, color: text, minHeight: "calc(100vh - 56px)", display: "flex", justifyContent: "center" }}>
-      <div style={{ maxWidth: 900, width: "100%", textAlign: "center" }}>
-        <h1 style={{ marginTop: 0 }}>Búsqueda de Registros</h1>
-        <p style={{ color: muted }}>Busca registros tributarios por RUT, período, tipo de instrumento o estado.</p>
+    <div style={{ padding: 24 }}>
+      <h1>Registros</h1>
 
-        {/* BARRA DE BÚSQUEDA */}
-        <div style={{ background: card, padding: 20, borderRadius: 6, border: `1px solid ${border}`, marginBottom: 24 }}>
-          <div style={{ display: "flex", gap: 12, flexDirection: "column", alignItems: "center" }}>
-            <input
-              type="text"
-              placeholder="Ingresa término de búsqueda..."
-              value={busqueda}
-              onChange={(e) => setBusqueda(e.target.value)}
-              style={{ width: "100%", padding: 10, borderRadius: 4, border: `1px solid ${border}`, background: inputBg, color: text, fontSize: 14, boxSizing: "border-box" }}
-            />
-            
-            <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap" }}>
-              <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
-                <input type="radio" name="filtro" value="titulo" checked={tipoFiltro === "titulo"} onChange={(e) => setTipoFiltro(e.target.value)} />
-                <span style={{ fontSize: 14 }}>Título</span>
-              </label>
-              <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
-                <input type="radio" name="filtro" value="descripcion" checked={tipoFiltro === "descripcion"} onChange={(e) => setTipoFiltro(e.target.value)} />
-                <span style={{ fontSize: 14 }}>Descripción</span>
-              </label>
-              <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
-                <input type="radio" name="filtro" value="todos" checked={tipoFiltro === "todos"} onChange={(e) => setTipoFiltro(e.target.value)} />
-                <span style={{ fontSize: 14 }}>Todos</span>
-              </label>
-            </div>
-          </div>
-        </div>
+      {error && <p style={{ color: "red" }}>{error}</p>}
+      {registros.length === 0 && <p>No hay registros</p>}
 
-        {/* RESULTADOS */}
-        <div>
-          <p style={{ color: muted, marginBottom: 16 }}>
-            {loading ? "Cargando..." : `${registrosFiltrados.length} registro(s) encontrado(s)`}
-          </p>
+      {registros.map((r) => {
+        const cal = ultimaCalificacion(r);
 
-          {registrosFiltrados.length === 0 ? (
-            <div style={{ background: card, padding: 32, borderRadius: 6, border: `1px solid ${border}` }}>
-              <p style={{ color: muted }}>No se encontraron registros que coincidan con tu búsqueda.</p>
-            </div>
-          ) : (
-            registrosFiltrados.map((r) => (
-              <div key={r.id} style={{ background: card, padding: 16, borderRadius: 6, border: `1px solid ${border}`, marginBottom: 12, textAlign: "left" }}>
-                <h3 style={{ marginTop: 0, marginBottom: 8, color: text }}>{r.titulo}</h3>
-                <p style={{ color: muted, margin: 0 }}>{r.descripcion}</p>
+        return (
+          <div
+            key={r.id}
+            style={{
+              background: "#0f172a",
+              padding: 16,
+              borderRadius: 10,
+              marginBottom: 12,
+            }}
+          >
+            <h3>{r.titulo}</h3>
+            <p>{r.descripcion}</p>
+
+            {/* ESTADO */}
+            {cal && (
+              <p>
+                Estado: <b>{cal.estado}</b>
+              </p>
+            )}
+
+            {/* BOTONES */}
+            {user?.rol === "ANALISTA" && (
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <button onClick={() => handleEditar(r)} style={btn("gray")}>
+                  Editar
+                </button>
+
+                <button
+                  onClick={() => handleEliminar(r.id)}
+                  style={btn("red")}
+                >
+                  Eliminar
+                </button>
+
+                {!cal && (
+                  <button
+                    onClick={() => handleCrearCalificacion(r.id)}
+                    style={btn("blue")}
+                  >
+                    Crear calificación
+                  </button>
+                )}
+
+                {cal?.estado === "BORRADOR" && (
+                  <button
+                    onClick={() => handleEnviarValidacion(cal.id)}
+                    style={btn("orange")}
+                  >
+                    Enviar a validación
+                  </button>
+                )}
               </div>
-            ))
-          )}
-        </div>
-      </div>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
+
+const btn = (color) => ({
+  background:
+    color === "blue"
+      ? "#2563eb"
+      : color === "orange"
+      ? "#f59e0b"
+      : color === "red"
+      ? "#dc2626"
+      : "#334155",
+  color: "white",
+  border: "none",
+  padding: "8px 14px",
+  borderRadius: 8,
+  cursor: "pointer",
+});

@@ -1,8 +1,15 @@
 from django.contrib.auth.models import User
 from django.db import models
 
+# ===============================
+# REGISTROS
+# ===============================
 class Registro(models.Model):
-    usuario = models.ForeignKey(User, on_delete=models.CASCADE, related_name="registros")
+    usuario = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="registros"
+    )
     titulo = models.CharField(max_length=200)
     descripcion = models.TextField()
     fecha = models.DateTimeField(auto_now_add=True)
@@ -10,6 +17,10 @@ class Registro(models.Model):
     def __str__(self):
         return self.titulo
 
+
+# ===============================
+# CALIFICACIONES
+# ===============================
 class Calificacion(models.Model):
     ESTADO_CHOICES = [
         ("BORRADOR", "Borrador"),
@@ -46,6 +57,10 @@ class Calificacion(models.Model):
     def __str__(self):
         return f"Calificación {self.id} - {self.estado}"
 
+
+# ===============================
+# PERFIL DE USUARIO / RBAC
+# ===============================
 class PerfilUsuario(models.Model):
     ROL_CHOICES = [
         ('CORREDOR', 'Corredor de inversión'),
@@ -54,15 +69,20 @@ class PerfilUsuario(models.Model):
         ('TI', 'Administrador TI'),
     ]
 
-    usuario = models.OneToOneField(User, on_delete=models.CASCADE, related_name="perfil")
+    usuario = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name="perfil"
+    )
     rol = models.CharField(max_length=20, choices=ROL_CHOICES)
 
     def __str__(self):
         return f"{self.usuario.username} ({self.rol})"
-# -------------------------------
-#     REGLAS DE NEGOCIO
-# -------------------------------
 
+
+# ===============================
+# REGLAS DE NEGOCIO
+# ===============================
 class ReglaNegocio(models.Model):
     ESTADO_CHOICES = [
         ("ACTIVA", "Activa"),
@@ -73,13 +93,8 @@ class ReglaNegocio(models.Model):
 
     nombre = models.CharField(max_length=150)
     descripcion = models.TextField()
-
-    condicion = models.TextField(
-        help_text="Condición lógica de la regla (ej: monto > 1000000)"
-    )
-    accion = models.TextField(
-        help_text="Acción a ejecutar cuando se cumple la condición"
-    )
+    condicion = models.TextField()
+    accion = models.TextField()
 
     version = models.IntegerField(default=1)
     estado = models.CharField(
@@ -99,36 +114,18 @@ class ReglaNegocio(models.Model):
 
     def __str__(self):
         return f"{self.nombre} v{self.version} ({self.estado})"
-class Auditoria(models.Model):
-    ACCION_CHOICES = [
-        ("CREATE", "Creación"),
-        ("UPDATE", "Modificación"),
-        ("DELETE", "Eliminación"),
-        ("RULE", "Regla aplicada"),
-    ]
 
-    usuario = models.ForeignKey(
-        User,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True
-    )
 
-    modelo = models.CharField(max_length=100)
-    objeto_id = models.IntegerField(null=True, blank=True)
-    accion = models.CharField(max_length=20, choices=ACCION_CHOICES)
-    detalle = models.TextField()
-    fecha = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f"{self.fecha} - {self.accion} - {self.modelo}"
-    
+# ===============================
+# AUDITORÍA (ÚNICA Y FINAL)
+# ===============================
 class Auditoria(models.Model):
     ACCION_CHOICES = [
         ("CREATE", "Creación"),
         ("UPDATE", "Actualización"),
         ("DELETE", "Eliminación"),
         ("LOGIN", "Inicio de sesión"),
+        ("RULE", "Regla aplicada"),
     ]
 
     usuario = models.ForeignKey(
@@ -145,4 +142,4 @@ class Auditoria(models.Model):
     fecha = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"[{self.fecha}] {self.usuario} - {self.accion}"
+        return f"[{self.fecha}] {self.accion} - {self.modelo}"

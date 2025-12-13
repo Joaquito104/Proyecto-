@@ -14,6 +14,12 @@ class CalificacionView(APIView):
         registro_id = request.data.get("registro_id")
         comentario = request.data.get("comentario", "")
 
+        if not registro_id:
+            return Response(
+                {"detail": "registro_id es obligatorio"},
+                status=400
+            )
+
         try:
             registro = Registro.objects.get(id=registro_id)
         except Registro.DoesNotExist:
@@ -22,14 +28,17 @@ class CalificacionView(APIView):
                 status=404
             )
 
+        # 🔥 CLAVE: siempre se crea como PENDIENTE
         calificacion = Calificacion.objects.create(
             registro=registro,
             creado_por=request.user,
-            comentario=comentario
+            comentario=comentario,
+            estado="PENDIENTE"
         )
 
         return Response({
-            "detail": "Calificación creada",
+            "detail": "Calificación creada y enviada a validación",
             "id": calificacion.id,
-            "estado": calificacion.estado
-        })
+            "estado": calificacion.estado,
+            "registro_id": registro.id
+        }, status=201)

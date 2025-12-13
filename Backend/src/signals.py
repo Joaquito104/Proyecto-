@@ -56,19 +56,17 @@ def auditar_registro_delete(sender, instance, **kwargs):
 # ===============================
 @receiver(post_save, sender=Calificacion)
 def auditar_calificacion_save(sender, instance, created, **kwargs):
+    if not created:
+        return  # <- evitamos duplicar auditoría en updates
+
     usuario = instance.creado_por
 
     Auditoria.objects.create(
         usuario=usuario,
         rol=obtener_rol(usuario),
-        accion="CREATE" if created else "UPDATE",
+        accion="CREATE",
         modelo="Calificacion",
         objeto_id=instance.id,
-        descripcion=(
-            f"Calificación creada ({instance.estado}) "
-            f"para registro ID {instance.registro.id}"
-            if created
-            else f"Calificación actualizada ({instance.estado}) "
-                 f"para registro ID {instance.registro.id}"
-        ),
+        descripcion=f"Calificación creada ({instance.estado}) para registro ID {instance.registro.id}",
     )
+
