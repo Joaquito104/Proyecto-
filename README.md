@@ -793,3 +793,127 @@ Para más información, revisar la documentación de:
 - ✅ Implementado panel **Administración Nuam**
 
 ---
+📅 Resumen de Avances – 14 de diciembre de 2025
+
+
+
+1. Conexión y validación de MongoDB
+
+Se verificó correctamente la conexión con MongoDB Compass.
+
+Se confirmó la lectura y escritura de calificaciones desde MongoDB.
+
+Se validó que las colecciones se crean y consultan correctamente.
+
+2. Implementación de dashboards por rol (RBAC)
+
+Se dejó funcionando la separación correcta de vistas por rol, cumpliendo RBAC:
+
+/dashboard/corredor
+
+/dashboard/analista
+
+/dashboard/auditor
+
+/dashboard/admin-ti
+
+se validó que:
+
+Un analista no puede entrar al dashboard de corredor
+
+Un auditor no puede acceder a vistas no autorizadas
+
+El bloqueo muestra “No autorizado” correctamente
+
+3.Dashboard Corredor (funcional)
+
+Visualización de certificados propios
+
+Estados visibles: BORRADOR, PENDIENTE, OBSERVADA, APROBADA
+
+Estadísticas:
+
+Total de certificados
+
+Conteo por estado
+
+Filtros por:
+
+Estado
+
+Período
+
+Tipo de certificado
+
+Navegación a detalle del certificado
+
+
+4. Dashboard Analista (funcional)
+
+Visualización de todas las calificaciones
+
+Cambio de estado:
+
+BORRADOR → PENDIENTE
+
+Aplicación de filtros
+
+Validación del flujo correcto antes de pasar a auditoría
+
+5. Dashboard Auditor (funcional)
+
+Visualización de calificaciones en estado PENDIENTE
+
+Resolución de calificaciones:
+
+APROBADA
+
+RECHAZADA
+
+OBSERVADA
+
+Registro de observaciones/comentarios
+
+
+6. Flujo completo de estados validado
+
+Se comprobó el flujo real del sistema:
+
+Corredor crea certificado → BORRADOR
+
+Analista revisa → PENDIENTE
+
+Auditor:
+
+Aprueba → APROBADA
+
+Rechaza → RECHAZADA
+
+Observa → OBSERVADA
+
+Corredor visualiza observación
+
+El flujo funciona correctamente a nivel de lógica y permisos.
+
+7. Vista Detalle de Calificación
+
+Se implementó DetalleCalificacion.jsx
+
+Se logró:
+
+Ver detalle completo del certificado
+
+Mostrar comentario del auditor
+
+Mostrar estado actual
+
+
+8.Router y protección de rutas (Frontend)
+
+Se configuró correctamente router.jsx
+
+Uso de ProtectedRoute por rol
+
+Layout común con Navbar y Footer
+
+Rutas protegidas correctamente por permisos
