@@ -54,19 +54,54 @@ def auditar_registro_delete(sender, instance, **kwargs):
 # ===============================
 # CALIFICACIÓN — CREATE / UPDATE
 # ===============================
+# Guardar estado anterior en thread local
+import threading
+_calificacion_state = threading.local()
+
 @receiver(post_save, sender=Calificacion)
 def auditar_calificacion_save(sender, instance, created, **kwargs):
-    if not created:
-        return  # <- evitamos duplicar auditoría en updates
-
+    """
+    Auditar creación y cambios de estado en Calificacion
+    """
     usuario = instance.creado_por
 
-    Auditoria.objects.create(
-        usuario=usuario,
-        rol=obtener_rol(usuario),
-        accion="CREATE",
-        modelo="Calificacion",
-        objeto_id=instance.id,
-        descripcion=f"Calificación creada ({instance.estado}) para registro ID {instance.registro.id}",
-    )
+    if created:
+        Auditoria.objects.create(
+            usuario=usuario,
+            rol=obtener_rol(usuario),
+            accion="CREATE",
+            modelo="Calificacion",
+            objeto_id=instance.id,
+            descripcion=f"Calificación creada ({instance.estado}) para registro ID {instance.registro.id}",
+        )
+    else:
+        # Detectar cambio de estado
+        estado_anterior = getattr(_calificacion_state, f'estado_{instance.id}', None)
+        if estado_anterior and estado_anterior != instance.estado:
+            Auditoria.objects.create(
+                usuario=usuario,
+                rol=obtener_rol(usuario),
+                accion="ESTADO_CAMBIO",
+                modelo="Calificacion",
+                objeto_id=instance.id,
+                descripcion=f"Calificación cambió de {estado_anterior} a {instance.estado}",
+                metadatos={
+                    "estado_anterior": estado_anterior,
+                    "estado_nuevo": instance.estado
+                }
+            )
+
+
+# Signal pre_save para capturar estado anterior
+from django.db.models.signals import pre_save
+
+@receiver(pre_save, sender=Calificacion)
+def capturar_estado_anterior(sender, instance, **kwargs):
+    """Capturar estado anterior antes de guardar"""
+    if instance.pk:  # Solo si ya existe
+        try:
+            anterior = Calificacion.objects.get(pk=instance.pk)
+            setattr(_calificacion_state, f'estado_{instance.id}', anterior.estado)
+        except Calificacion.DoesNotExist:
+            pass
 

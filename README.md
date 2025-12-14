@@ -917,3 +917,135 @@ Uso de ProtectedRoute por rol
 Layout común con Navbar y Footer
 
 Rutas protegidas correctamente por permisos
+
+---
+
+## Actualización 15/12/2025
+
+### 🎯 Módulo de Certificados Digitales Completo
+
+#### 1. Modelo Certificado (PostgreSQL)
+- **Campos**: tipo (AFP, APV, ISAPRE, etc), archivo (FileField), nombre_archivo, tamaño_bytes, mime_type
+- **Estados**: CARGADO → VALIDADO/RECHAZADO
+- **Relaciones**: FK a Registro, Calificacion (nullable), User (cargado_por, validado_por)
+- **Metadatos**: JSONField para datos extraídos por OCR
+- **Índices**: Optimización en tipo+estado, registro+tipo
+
+#### 2. Vistas de Upload y Gestión
+Archivo: `Backend/src/views/certificados_upload.py`
+
+**CertificadoUploadView (POST)**
+- Multipart/form-data con validación de tamaño (max 10MB)
+- Formatos: PDF, CSV, Excel (.xls, .xlsx)
+- Validación de MIME type vs extensión
+- Permisos: Corredor solo sube a sus registros
+- Auto-auditoría de carga
+
+**CertificadoListView (GET)**
+- Filtros: registro_id, tipo, estado
+- Corredor solo ve sus certificados
+- Serialización completa con URLs
+
+**CertificadoDetailView (GET/PATCH/DELETE)**
+- GET: Detalle completo con metadatos
+- PATCH: Validar/rechazar (solo ANALISTA/AUDITOR/TI)
+- DELETE: Solo creador o TI
+- Auto-auditoría de cambios
+
+#### 3. Configuración Django Storage
+- **MEDIA_ROOT**: `Backend/media/`
+- **MEDIA_URL**: `/media/`
+- Upload path: `certificados/%Y/%m/` (organizados por fecha)
+- Servido en desarrollo con `static()`
+
+#### 4. Rutas API
+```
+POST   /api/certificados-upload/          # Subir certificado
+GET    /api/certificados-list/            # Listar con filtros
+GET    /api/certificados-detail/<id>/     # Ver detalle
+PATCH  /api/certificados-detail/<id>/     # Validar/rechazar
+DELETE /api/certificados-detail/<id>/     # Eliminar
+```
+
+#### 5. Migraciones
+- `0011_certificado_alter_auditoria_options_and_more.py`
+- Índices DB para queries eficientes
+
+---
+
+### 📊 Sistema de Auditoría Mejorado
+
+#### 1. Modelo Auditoria Ampliado
+**Nuevas acciones**:
+- `ESTADO_CAMBIO`: Cambios de estado en Calificacion
+- `RESOLUCION`: Decisiones de auditor (aprobar/rechazar/observar)
+- `LOGOUT`: Cierre de sesión
+
+**Nuevos campos**:
+- `ip_address`: CharField(100) para tracking de IP
+- `metadatos`: JSONField para contexto adicional (estado_anterior, estado_nuevo, etc)
+
+**Meta**:
+- Índices en (usuario, fecha) y (accion, modelo)
+- Ordering por -fecha
+
+#### 2. Vista de Auditoría con Filtros
+Archivo: `Backend/src/views/auditoria.py`
+
+**AuditoriaView (GET)**
+- **Filtros**: fecha_desde, fecha_hasta, usuario, accion, modelo, objeto_id, rol
+- **Paginación**: page, page_size (default 50, max 200)
+- **Default**: Últimos 30 días
+- **Permisos**: Solo AUDITOR/TI/ADMIN
+- **Respuesta**: Total, páginas, resultados con relaciones cargadas
+
+**AuditoriaEstadisticasView (GET)**
+- Totales por acción, modelo, rol
+- Top 10 usuarios más activos
+- Periodo: últimos 30 días
+
+#### 3. Auto-auditoría de Cambios de Estado
+Archivo: `Backend/src/signals.py`
+
+**Mecanismo**:
+- `pre_save`: Captura estado anterior en thread local
+- `post_save`: Detecta cambio y crea registro ESTADO_CAMBIO
+- **Metadatos**: { estado_anterior, estado_nuevo }
+- Automático para Calificacion
+
+#### 4. Rutas API
+```
+GET /api/auditoria/                    # Lista con filtros
+GET /api/auditoria/estadisticas/       # Estadísticas 30 días
+```
+
+---
+
+### 🔧 Mejoras de Infraestructura
+
+1. **Django FileField Storage**: MEDIA_ROOT configurado para producción
+2. **URL Routing**: Orden correcto (estadisticas antes de <id>)
+3. **Signals**: Auto-tracking de cambios de estado
+4. **Indexes DB**: Optimización de queries en Certificado y Auditoria
+5. **Thread Safety**: Estado anterior capturado con threading.local
+
+---
+
+### ⚠️ Pendiente (Backlog Próximo)
+
+**Alta Prioridad**:
+1. **JWT Refresh + MFA**: Implementar refresh token rotation y autenticación multifactor
+2. **PUT/PATCH Corredor**: Permitir correcciones en calificaciones OBSERVADA → BORRADOR
+3. **Frontend Certificados**: Página de upload con drag-drop y preview
+
+**Media Prioridad**:
+4. **RBAC Documentación**: Matriz formal de permisos + diagrama UML
+5. **Calificaciones Model**: Ajustes finales de campos y validaciones
+6. **Reglas de Negocio**: Auto-ejecución en cambio de estado
+
+**Baja Prioridad**:
+7. **Registro Público**: Frontend para usuarios sin cuenta
+8. **Pruebas Unitarias**: Coverage 80%+ en vistas críticas
+9. **CI/CD**: GitHub Actions + Docker
+
+---

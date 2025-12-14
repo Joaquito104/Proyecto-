@@ -75,6 +75,18 @@ class PerfilUsuario(models.Model):
         related_name="perfil"
     )
     rol = models.CharField(max_length=20, choices=ROL_CHOICES)
+    
+    # Perfil extendido
+    foto_perfil = models.ImageField(upload_to='perfiles/%Y/%m/', null=True, blank=True)
+    biografia = models.TextField(blank=True)
+    telefono = models.CharField(max_length=20, blank=True)
+    
+    # MFA
+    mfa_habilitado = models.BooleanField(default=False)
+    mfa_secret = models.CharField(max_length=32, blank=True)
+    
+    # Control de cambio de rol
+    cambio_rol_solicitado = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.usuario.username} ({self.rol})"
@@ -153,6 +165,91 @@ class HistorialReglaNegocio(models.Model):
 
 
 # ===============================
+# CERTIFICADOS
+# ===============================
+class Certificado(models.Model):
+    TIPO_CHOICES = [
+        ("AFP", "AFP - Administradora de Fondos de Pensiones"),
+        ("APV", "APV - Ahorro Previsional Voluntario"),
+        ("ISAPRE", "ISAPRE"),
+        ("FONASA", "FONASA"),
+        ("SEGURO_VIDA", "Seguro de Vida"),
+        ("SEGURO_CESANTIA", "Seguro de Cesantía"),
+        ("OTRO", "Otro"),
+    ]
+
+    ESTADO_CHOICES = [
+        ("CARGADO", "Cargado"),
+        ("VALIDADO", "Validado"),
+        ("RECHAZADO", "Rechazado"),
+    ]
+
+    # Relaciones
+    registro = models.ForeignKey(
+        Registro,
+        on_delete=models.CASCADE,
+        related_name="certificados"
+    )
+    
+    calificacion = models.ForeignKey(
+        Calificacion,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="certificados"
+    )
+
+    cargado_por = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="certificados_cargados"
+    )
+
+    # Datos del certificado
+    tipo = models.CharField(max_length=20, choices=TIPO_CHOICES)
+    archivo = models.FileField(upload_to="certificados/%Y/%m/", max_length=500)
+    nombre_archivo = models.CharField(max_length=255)
+    tamanio_bytes = models.PositiveIntegerField()
+    mime_type = models.CharField(max_length=100, default="application/pdf")
+    
+    # Metadatos
+    metadatos = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Información adicional extraída del certificado (OCR, fechas, montos)"
+    )
+    
+    estado = models.CharField(
+        max_length=20,
+        choices=ESTADO_CHOICES,
+        default="CARGADO"
+    )
+    
+    # Auditoría
+    fecha_carga = models.DateTimeField(auto_now_add=True)
+    fecha_validacion = models.DateTimeField(null=True, blank=True)
+    validado_por = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="certificados_validados"
+    )
+    observaciones = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ['-fecha_carga']
+        indexes = [
+            models.Index(fields=['tipo', 'estado']),
+            models.Index(fields=['registro', 'tipo']),
+        ]
+
+    def __str__(self):
+        return f"{self.get_tipo_display()} - {self.nombre_archivo}"
+
+
+# ===============================
 # AUDITORÍA (ÚNICA Y FINAL)
 # ===============================
 class Auditoria(models.Model):
@@ -161,7 +258,10 @@ class Auditoria(models.Model):
         ("UPDATE", "Actualización"),
         ("DELETE", "Eliminación"),
         ("LOGIN", "Inicio de sesión"),
+        ("LOGOUT", "Cierre de sesión"),
         ("RULE", "Regla aplicada"),
+        ("ESTADO_CAMBIO", "Cambio de estado"),
+        ("RESOLUCION", "Resolución"),
     ]
 
     usuario = models.ForeignKey(
@@ -176,6 +276,15 @@ class Auditoria(models.Model):
     objeto_id = models.PositiveIntegerField(null=True, blank=True)
     descripcion = models.TextField()
     fecha = models.DateTimeField(auto_now_add=True)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    metadatos = models.JSONField(default=dict, blank=True)
+
+    class Meta:
+        ordering = ['-fecha']
+        indexes = [
+            models.Index(fields=['usuario', 'fecha']),
+            models.Index(fields=['accion', 'modelo']),
+        ]
 
     def __str__(self):
         return f"[{self.fecha}] {self.accion} - {self.modelo}"
@@ -192,3 +301,66 @@ class Feedback(models.Model):
 
     def __str__(self):
         return f"Feedback {self.id}"
+
+
+# ===============================
+# CORREOS ADICIONALES
+# ===============================
+class CorreoAdicional(models.Model):
+    """
+    Correos adicionales asociados a un usuario
+    """
+    usuario = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="correos_adicionales"
+    )
+    email = models.EmailField()
+    verificado = models.BooleanField(default=False)
+    principal = models.BooleanField(default=False)
+    fecha_agregado = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        unique_together = ['usuario', 'email']
+        ordering = ['-principal', '-fecha_agregado']
+    
+    def __str__(self):
+        return f"{self.usuario.username} - {self.email}"
+
+
+# ===============================
+# SOLICITUDES DE CAMBIO DE ROL
+# ===============================
+class SolicitudCambioRol(models.Model):
+    ESTADO_CHOICES = [
+        ('PENDIENTE', 'Pendiente'),
+        ('APROBADA', 'Aprobada'),
+        ('RECHAZADA', 'Rechazada'),
+    ]
+    
+    usuario = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="solicitudes_rol"
+    )
+    rol_actual = models.CharField(max_length=20)
+    rol_solicitado = models.CharField(max_length=20, choices=PerfilUsuario.ROL_CHOICES)
+    justificacion = models.TextField()
+    estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='PENDIENTE')
+    
+    fecha_solicitud = models.DateTimeField(auto_now_add=True)
+    fecha_respuesta = models.DateTimeField(null=True, blank=True)
+    respondido_por = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="solicitudes_respondidas"
+    )
+    comentario_admin = models.TextField(blank=True)
+    
+    class Meta:
+        ordering = ['-fecha_solicitud']
+    
+    def __str__(self):
+        return f"{self.usuario.username}: {self.rol_actual} → {self.rol_solicitado} ({self.estado})"

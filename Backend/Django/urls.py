@@ -1,6 +1,15 @@
 from django.contrib import admin
 from django.urls import path, include
+from django.conf import settings
+from django.conf.urls.static import static
 from src.views.perfil import PerfilUsuarioView
+from src.views.perfil_completo import (
+    PerfilUsuarioView as PerfilCompletoView,
+    CorreoAdicionalView,
+    SolicitudCambioRolView,
+    MFAConfigView,
+    GestionSolicitudesRolView,
+)
 from src.views.feedback import FeedbackView
 from src.views.auth import mi_perfil, registrar_usuario
 from rest_framework.routers import DefaultRouter
@@ -19,6 +28,11 @@ from src.views.registros import RegistroViewSet
 # =========================
 from src.views.auth import mi_perfil
 from src.views.certificados import CargaCertificadosView
+from src.views.certificados_upload import (
+    CertificadoUploadView,
+    CertificadoListView,
+    CertificadoDetailView,
+)
 from src.views.calificaciones import CalificacionView
 from src.views.calificaciones_mongo import (
     CalificacionCorredorView,
@@ -31,7 +45,7 @@ from src.views.calificaciones_mongo import (
     DocumentosMongoView,
     CalificacionCargaMasivaCSVView,
 )
-from src.views.auditoria import AuditoriaView
+from src.views.auditoria import AuditoriaView, AuditoriaEstadisticasView
 from src.views.reglas_negocio import ReglasNegocioView, ReglaNegocioDetailView
 from src.views.historial_reglas import HistorialReglaView, RollbackReglaView, CompararVersionesView
 from src.views.usuarios import UsuariosView, UsuarioDetailView
@@ -68,11 +82,25 @@ urlpatterns = [
     path("api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     path("api/perfil/", mi_perfil, name="mi_perfil"),
     path("api/registro/", registrar_usuario),
+    
+    # ---------- PERFIL COMPLETO ----------
+    path("api/perfil-completo/", PerfilCompletoView.as_view()),
+    path("api/correos-adicionales/", CorreoAdicionalView.as_view()),
+    path("api/solicitud-cambio-rol/", SolicitudCambioRolView.as_view()),
+    path("api/mfa-config/", MFAConfigView.as_view()),
+    path("api/admin/solicitudes-rol/", GestionSolicitudesRolView.as_view()),
+    path("api/admin/solicitudes-rol/<int:solicitud_id>/", GestionSolicitudesRolView.as_view()),
 
 
 
     # ---------- MÓDULOS ----------
     path("api/certificados/", CargaCertificadosView.as_view()),
+    
+    # CERTIFICADOS (Upload/Validación)
+    path("api/certificados-upload/", CertificadoUploadView.as_view()),
+    path("api/certificados-list/", CertificadoListView.as_view()),
+    path("api/certificados-detail/<int:certificado_id>/", CertificadoDetailView.as_view()),
+    
     path("api/calificaciones/", CalificacionView.as_view()),  # Antigua (PostgreSQL)
     path("api/calificaciones/<int:calificacion_id>/enviar/", EnviarValidacionView.as_view()),
     
@@ -102,6 +130,7 @@ urlpatterns = [
 
     # AUDITORÍA
     path("api/auditoria/", AuditoriaView.as_view()),
+    path("api/auditoria/estadisticas/", AuditoriaEstadisticasView.as_view()),
 
     # REGLAS
     path("api/reglas-negocio/", ReglasNegocioView.as_view()),
@@ -124,3 +153,7 @@ urlpatterns = [
     # VIEWSETS
     path("api/", include(router.urls)),
 ]
+
+# Servir archivos media en desarrollo
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

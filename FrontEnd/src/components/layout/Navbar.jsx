@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useContext } from "react";
+import { useContext, useState } from "react";
 import { ThemeContext, AuthContext } from "../../App";
 import ThemeToggle from "../common/ThemeToggle";
 
@@ -8,6 +8,7 @@ export default function Navbar() {
   const { user, logout } = useContext(AuthContext);
   const location = useLocation();
   const navigate = useNavigate();
+  const [mostrarDropdown, setMostrarDropdown] = useState(false);
 
   const dark = theme === "dark";
   const navBg = dark ? "#13202a" : "#f2f2f2";
@@ -93,12 +94,6 @@ export default function Navbar() {
         )}
 
         {user && (
-          <Link to="/perfil" style={linkStyle("/perfil")}>
-            Mi Perfil
-          </Link>
-        )}
-
-        {user && (
           <Link to="/feedback" style={linkStyle("/feedback")}>
             Feedback
           </Link>
@@ -136,12 +131,9 @@ export default function Navbar() {
             </Link>
           </>
         ) : (
-          <>
-            <span style={{ fontSize: 13 }}>
-              {user.username} — <b>{user.is_superuser ? "SUPER" : user.rol}</b>
-            </span>
+          <div style={{ position: "relative" }}>
             <button
-              onClick={handleLogout}
+              onClick={() => setMostrarDropdown(!mostrarDropdown)}
               style={{
                 background: btnBg,
                 color: "#fff",
@@ -150,11 +142,86 @@ export default function Navbar() {
                 borderRadius: 8,
                 cursor: "pointer",
                 fontWeight: 700,
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
               }}
             >
-              Cerrar sesión
+              👤 {user.username} {mostrarDropdown ? "▲" : "▼"}
             </button>
-          </>
+
+            {mostrarDropdown && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: "100%",
+                  right: 0,
+                  background: navBg,
+                  border: `1px solid ${activeBg}`,
+                  borderRadius: 8,
+                  minWidth: 200,
+                  marginTop: 8,
+                  zIndex: 1000,
+                  boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
+                }}
+              >
+                <Link
+                  to="/perfil"
+                  onClick={() => setMostrarDropdown(false)}
+                  style={{
+                    display: "block",
+                    padding: "12px 16px",
+                    color: navColor,
+                    textDecoration: "none",
+                    borderBottom: `1px solid ${activeBg}`,
+                    transition: "background 0.2s",
+                  }}
+                  onMouseEnter={(e) => (e.target.style.background = activeBg)}
+                  onMouseLeave={(e) => (e.target.style.background = "transparent")}
+                >
+                  ⚙️ Configuración de Perfil
+                </Link>
+                <Link
+                  to="/perfil"
+                  onClick={() => setMostrarDropdown(false)}
+                  style={{
+                    display: "block",
+                    padding: "12px 16px",
+                    color: navColor,
+                    textDecoration: "none",
+                    borderBottom: `1px solid ${activeBg}`,
+                    transition: "background 0.2s",
+                  }}
+                  onMouseEnter={(e) => (e.target.style.background = activeBg)}
+                  onMouseLeave={(e) => (e.target.style.background = "transparent")}
+                >
+                  👤 Mi Perfil
+                </Link>
+                <button
+                  onClick={() => {
+                    setMostrarDropdown(false);
+                    handleLogout();
+                  }}
+                  style={{
+                    display: "block",
+                    width: "100%",
+                    padding: "12px 16px",
+                    color: danger,
+                    background: "transparent",
+                    border: "none",
+                    textAlign: "left",
+                    cursor: "pointer",
+                    fontWeight: 600,
+                    transition: "background 0.2s",
+                  }}
+                  onMouseEnter={(e) => (e.target.style.background = activeBg)}
+                  onMouseLeave={(e) => (e.target.style.background = "transparent")}
+                >
+                  🚪 Cerrar Sesión
+                </button>
+              </div>
+            )}
+          </div>
         )}
       </div>
     </nav>
