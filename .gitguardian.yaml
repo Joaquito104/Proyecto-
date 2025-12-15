@@ -1,0 +1,6 @@
+version: 2
+paths-ignore:
+  - .env.docker
+  - Backend/.env.example
+  - "**/*.md"
+  - "**/README.md"
