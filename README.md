@@ -40,6 +40,115 @@ Este contenido se trasladó a [CHANGELOG.md](CHANGELOG.md).
 
 ---
 
+## 📁 Estructura del Proyecto
+
+```
+Ev3-Pi/
+├── Backend/
+│   ├── Django/                          # Configuración Django
+│   │   ├── __init__.py
+│   │   ├── settings.py                  # Settings (DB, JWT, CORS, seguridad)
+│   │   ├── urls.py                      # URLs principales
+│   │   ├── asgi.py
+│   │   └── wsgi.py
+│   ├── src/                             # Aplicación principal
+│   │   ├── models.py                    # Modelos (Registro, Calificación, Auditoría)
+│   │   ├── serializers.py               # Serializers DRF
+│   │   ├── permissions.py               # Permisos RBAC (4 roles)
+│   │   ├── rbac.py                      # Configuración roles
+│   │   ├── validators.py                # Validadores (RUT, SQL injection, XSS) ✨ NUEVO
+│   │   ├── throttling.py                # Rate limiting (5 niveles) ✨ NUEVO
+│   │   ├── admin.py                     # Admin panel
+│   │   ├── views/                       # Vistas por funcionalidad
+│   │   │   ├── auth.py                  # Login, registro, MFA
+│   │   │   ├── jwt_auth.py              # Refresh token, logout
+│   │   │   ├── calificaciones_mongo.py  # CRUD calificaciones + carga masiva CSV
+│   │   │   ├── exportar.py              # Exportar PDF/Excel/CSV
+│   │   │   ├── auditoria.py             # Logs de auditoría
+│   │   │   ├── certificados.py          # Gestión certificados
+│   │   │   └── ...
+│   │   ├── migrations/                  # Migraciones BD
+│   │   ├── management/commands/         # Comandos custom
+│   │   │   ├── cargar_datos_iniciales.py
+│   │   │   └── crear_superusuario_global.py
+│   │   └── signals.py                   # Señales Django (auditoría automática)
+│   ├── scripts/                         # Scripts de seguridad ✨ NUEVO
+│   │   ├── check_security.py            # Auditor automático (31 checks)
+│   │   └── cambiar_credenciales.py      # Gestor de credenciales débiles
+│   ├── logs/                            # Logs de seguridad ✨ NUEVO
+│   │   └── security.log
+│   ├── manage.py
+│   ├── requirements.txt                 # Dependencias Python
+│   └── .env.example                     # Template configuración ✨ NUEVO
+│
+├── FrontEnd/
+│   ├── src/
+│   │   ├── pages/                       # Páginas principales
+│   │   │   ├── Home.jsx                 # Landing page
+│   │   │   ├── Login.jsx                # Autenticación
+│   │   │   ├── Registro.jsx             # Registro usuarios
+│   │   │   ├── Perfil.jsx               # Perfil usuario + MFA
+│   │   │   ├── Dashboard.jsx            # Dashboard
+│   │   │   ├── AuditPanel.jsx           # Panel auditoría
+│   │   │   ├── Registros.jsx            # Listado registros
+│   │   │   ├── CertificatesUpload.jsx   # Carga certificados
+│   │   │   ├── TaxManagement.jsx        # Gestión tributaria
+│   │   │   └── SystemSettings.jsx       # Configuración sistema
+│   │   ├── components/
+│   │   │   ├── layout/                  # Componentes layout
+│   │   │   │   ├── Navbar.jsx
+│   │   │   │   ├── Sidebar.jsx
+│   │   │   │   └── Footer.jsx
+│   │   │   ├── common/                  # Componentes reutilizables
+│   │   │   │   ├── Button.jsx           # 3 variantes + dark mode
+│   │   │   │   ├── Input.jsx            # Con validación
+│   │   │   │   ├── Modal.jsx
+│   │   │   │   └── ThemeToggle.jsx
+│   │   │   └── ProtectedRoute.jsx       # Rutas protegidas JWT
+│   │   ├── hooks/                       # Custom hooks
+│   │   │   ├── useForm.js               # Manejo formularios
+│   │   │   ├── useCache.js              # 5 estrategias caching ✨ NUEVO
+│   │   │   └── useValidation.js         # 12 validadores ✨ NUEVO
+│   │   ├── App.jsx
+│   │   ├── router.jsx                   # Rutas React Router
+│   │   ├── App.css
+│   │   └── index.css
+│   ├── package.json                     # Dependencias Node.js
+│   ├── vite.config.js                   # Config Vite
+│   └── eslint.config.js
+│
+├── README.md                            # Este archivo
+├── CHANGELOG.md                         # Historial de cambios
+├── SECURITY.md                          # 📋 Resumen ejecutivo + detalles seguridad OWASP/NIST ✨ NUEVO
+├── DEPLOY.md                            # 🚀 Guía de despliegue producción ✨ NUEVO
+├── CHECKLIST_DEPLOY.md                  # ✅ Checklist 50 items para deploy ✨ NUEVO
+├── MODO_OSCURO.md                       # Dark mode implementation
+├── .gitignore                           # Git ignore actualizado ✨ MEJORADO
+└── .env                                 # Variables de entorno (NO subir a Git)
+```
+
+### 🔐 Características Principales
+
+**Backend:**
+- JWT + MFA (TOTP/QR code)
+- RBAC con 4 roles (TI, Auditor, Analista, Corredor)
+- MongoDB + PostgreSQL
+- Carga masiva CSV con validación
+- Exportar a PDF/Excel/CSV
+- Rate limiting (5 niveles)
+- Validadores OWASP (SQL injection, XSS, RUT)
+- Logging auditoría automático
+
+**Frontend:**
+- React 19 + Vite
+- Dark mode completo
+- Mobile responsive
+- Validaciones en tiempo real
+- Caching inteligente
+- Notificaciones en tiempo real (polling)
+
+---
+
 ## Cómo Ejecutar el Proyecto
 
 ### Requisitos Previos
