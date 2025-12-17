@@ -78,14 +78,21 @@ class RegistroUsuarioSerializer(serializers.Serializer):
     rol = serializers.ChoiceField(choices=PerfilUsuario.ROL_CHOICES)
 
     def create(self, validated_data):
+        from django.db import IntegrityError
+        from rest_framework.exceptions import ValidationError
         password = validated_data.pop("password")
         rol = validated_data.pop("rol")
-
-        user = User.objects.create(
-            username=validated_data["username"],
-            email=validated_data["email"],
-            password=make_password(password)  # 🔐 HASH OBLIGATORIO
-        )
+        try:
+            user = User.objects.create(
+                username=validated_data["username"],
+                email=validated_data["email"],
+                password=make_password(password)  # 🔐 HASH OBLIGATORIO
+            )
+        except IntegrityError as e:
+            if 'unique constraint' in str(e).lower() or 'llave duplicada' in str(e).lower():
+                raise ValidationError({"username": ["Este nombre de usuario ya existe."]})
+            else:
+                raise
 
         PerfilUsuario.objects.create(
             usuario=user,
